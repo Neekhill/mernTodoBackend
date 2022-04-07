@@ -34,7 +34,49 @@ async function login(email, reqpassword) {
   return { ...others, token };
 }
 
+async function checkIfAuthenticated(req, res, next) {
+  const authHeader = req.headers.token;
+  // Bearer Token
+  if (authHeader) {
+    token = authHeader.split(" ")[1];
+    try {
+      const user = await TokenService.verifyToken(token);
+      req.user = user;
+      //console.log(req.user);
+      next();
+    } catch (err) {
+      console.log(`err = ${err}`);
+      res.status(401).send(`${err}`);
+    }
+  } else {
+    return res.status(401).json("you are not authenticated");
+  }
+}
+
+function checkIfAuthenticatedAndAuthorizes(req, res, next) {
+  checkIfAuthenticated(req, res, () => {
+    if (req.user.userId === req.params.id || req.user.isAdmin) {
+      next();
+    } else {
+      res.status(403).json({ error: "You're not allowed to update this" });
+    }
+  });
+}
+
+function checkIfAuthenticatedAndAdmin(req, res, next) {
+  checkIfAuthenticated(req, res, () => {
+    if (req.user.isAdmin) {
+      next();
+    } else {
+      res.status(403).json({ error: "You're not allowed to update this" });
+    }
+  });
+}
+
 module.exports = {
   registerUser: registerUser,
   login: login,
+  checkIfAuthenticated: checkIfAuthenticated,
+  checkIfAuthenticatedAndAuthorizes: checkIfAuthenticatedAndAuthorizes,
+  checkIfAuthenticatedAndAdmin: checkIfAuthenticatedAndAdmin,
 };
