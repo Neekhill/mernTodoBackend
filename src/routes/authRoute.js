@@ -30,4 +30,20 @@ router.post("/register", async (req, res) => {
   }
 });
 
+//Login route
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  if (typeof email === "undefined" || typeof password === "undefined") {
+    res.status(400).send("Invalid parameters");
+  } else {
+    try {
+      const userWithToken = await AuthService.login(email, password);
+      res.status(200).send(userWithToken);
+    } catch (errcode) {
+      console.log(`errcode = ${errcode}`);
+      res.status(401).send(`${errcode}`);
+    }
+  }
+});
+
 module.exports = router;
